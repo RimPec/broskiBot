@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <h4 class="mb-3">Pending Tag Suggestions</h4>
+        <ul class="list-group mb-5 shadow-sm">
+            {% for tag in suggested_tags %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ tag.name }}
+                <a href="{{ url_for('approve_tag', tag_id=tag.id) }}" class="btn btn-sm btn-success">Approve</a>
+            </li>
+            {% else %}
+            <li class="list-group-item text-muted">No pending tags.</li>
+            {% endfor %}
+        </ul>
+        
+        <h4 class="mb-3">All Active Meetups</h4>
+        <ul class="list-group shadow-sm">
+            {% for task in tasks %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ task.title }} ({{ task.tag.name }})
+                <a href="{{ url_for('delete_task', task_id=task.id) }}" class="btn btn-sm btn-danger">Delete</a>
+            </li>
+            {% else %}
+            <li class="list-group-item text-muted">No active meetups.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}

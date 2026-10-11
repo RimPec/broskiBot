@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm p-4 mb-4">
+            <h4>Host a Meetup</h4>
+            <form method="POST" action="{{ url_for('add_task') }}">
+                <div class="mb-3">
+                    <label>Title</label>
+                    <input type="text" name="title" class="form-control" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label>Interest Tag</label>
+                    <select name="tag_id" class="form-select" required>
+                        <option value="" disabled selected>Select a tag...</option>
+                        {% for tag in tags %}
+                            <option value="{{ tag.id }}">{{ tag.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label>Location (Required)</label>
+                        <input type="text" name="location" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label>Description (Optional)</label>
+                        <input type="text" name="description" class="form-control">
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col">
+                        <label>Start Time</label>
+                        <input type="datetime-local" name="startTime" class="form-control" required>
+                    </div>
+                    <div class="col">
+                        <label>Max Attendees</label>
+                        <input type="number" name="max_attendees" class="form-control" min="2" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Create Meetup</button>
+            </form>
+        </div>
+
+        <div class="card shadow-sm p-3 bg-light">
+            <p class="small mb-2">Don't see a tag you want?</p>
+            <form method="POST" action="{{ url_for('suggest_tag') }}" class="d-flex">
+                <input type="text" name="tag_name" class="form-control form-control-sm me-2" placeholder="Suggest a new tag" required>
+                <button type="submit" class="btn btn-secondary btn-sm">Suggest</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
