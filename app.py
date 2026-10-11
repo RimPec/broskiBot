@@ -5,29 +5,38 @@ from extensions import db
 from models import User, Task, Tag
 from datetime import datetime
 
+
+#flask app config stuff
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'teamtasksecret'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+#connecting db
 db.init_app(app)
 
+#login manager shit i dont get but works
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+#has to run first
 with app.app_context():
-        db.create_all()
-        if not Tag.query.first():
-            defaults = ['Wander', 'Movie?', 'Study Sesh', 'Grab Lunch', 'Games?', 'Party']
-            for t in defaults:
-                db.session.add(Tag(name=t, status='approved'))
-            db.session.commit()
+    #create the tables
+    db.create_all()
+    #default tags
+    if not Tag.query.first():
+        defaults = ['Wander', 'Movie?', 'Study Sesh', 'Grab Lunch', 'Games?', 'Party']
+        for t in defaults:
+            db.session.add(Tag(name=t, status='approved'))
+        db.session.commit()
 
+#check user existance
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+#base route
 @app.route('/')
 def home():
     return redirect(url_for('login'))
@@ -36,16 +45,20 @@ def home():
 def register():
     if request.method == 'POST':
         uid = request.form['uid']
-        pwd = generate_password_hash(request.form['pwd'])
+        pwd = generate_password_hash(request.form['pwd']) #hashing shit on the go
+        
+        #first to log in admin
         if User.query.count() == 0:
             role = 'admin'
         else:
             role = 'user'
 
+        #no dupes
         if User.query.filter_by(uid=uid).first():
             flash('User ID already exists!', 'danger')
             return redirect(url_for('register'))
         
+        #write user to db
         new_user = User(uid=uid, pwd=pwd, role=role)
         db.session.add(new_user)
         db.session.commit()
@@ -60,8 +73,11 @@ def login():
         pwd = request.form['pwd']
         user = User.query.filter_by(uid=uid).first()
 
+        #check if existing user and pwd
         if user and check_password_hash(user.pwd, pwd):
             login_user(user)
+
+            #if admin or mod diff dash
             if user.role in ['admin', 'mod']:
                 return redirect(url_for('admin_dashboard'))
             return redirect(url_for('dashboard'))
@@ -75,6 +91,7 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
+#user main page
 @app.route('/dashboard')
 @login_required
 def dashboard():
@@ -84,6 +101,7 @@ def dashboard():
 @app.route('/admin')
 @login_required
 def admin_dashboard():
+    #secondary check for smartasses
     if current_user.role not in ['admin', 'mod']:
         flash("Access denied", 'danger')
         return redirect(url_for('dashboard'))
@@ -95,11 +113,12 @@ def admin_dashboard():
 @app.route('/admin/approve_tag/<int:tag_id>')
 @login_required
 def approve_tag(tag_id):
+    #secondary check for smartasses again
     if current_user.role not in ['admin', 'mod']:
         return redirect(url_for('dashboard'))
     
     tag = Tag.query.get_or_404(tag_id)
-    tag.status = 'approved'
+    tag.status = 'approved' #changes status in db so users can view
     db.session.commit()
     flash(f'Tag "{tag.name}" approved!', 'success')
     return redirect(url_for('admin_dashboard'))
@@ -135,7 +154,7 @@ def add_task():
         db.session.commit()
         flash('Meetup created!', 'success')
         return redirect(url_for('dashboard'))
-
+    #tags approved by admin + default tags
     approved_tags = Tag.query.filter_by(status='approved').all()
     return render_template('add_task.html', tags=approved_tags)
 
@@ -143,8 +162,10 @@ def add_task():
 @login_required
 def suggest_tag():
     tag_name = request.form['tag_name']
+    #no dupe suggestions
     if Tag.query.filter_by(name=tag_name).first():
         flash('Tag already exists or is pending approval.', 'warning')
+    #save as suggested for approval
     else:
         db.session.add(Tag(name=tag_name, status='suggested'))
         db.session.commit()
@@ -155,11 +176,12 @@ def suggest_tag():
 @login_required
 def rsvp(task_id):
     task = Task.query.get_or_404(task_id)
-    
+    #check @property to see if the activity is still up
     if not task.isActive:
         flash("This meetup is full or no longer active.", "danger")
         return redirect(url_for('dashboard'))
         
+    #so hast cant join their own stuff
     if current_user.id == task.created_by:
         flash("You are the host of this meetup.", "info")
         return redirect(url_for('dashboard'))
@@ -174,6 +196,7 @@ def rsvp(task_id):
 @login_required
 def delete_task(task_id):
     task = Task.query.get_or_404(task_id)
+    #only admin or creator can delete
     if current_user.id != task.created_by and current_user.role not in ['admin', 'mod']:
         flash("Access denied", "danger")
         return redirect(url_for('dashboard'))

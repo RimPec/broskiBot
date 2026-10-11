@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 
+<!-- color for tags -->
 {% set tag_colors = {
     'Wander': 'bg-success',
     'Movie?': 'bg-danger',
@@ -10,38 +11,73 @@
     'Party': 'bg-dark'
 } %}
 
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold m-0">Campus Meetups</h3>
+    <a href="{{ url_for('add_task') }}" class="btn btn-primary shadow-sm"><i class="bi bi-plus-lg me-1"></i> Create Plan</a>
+</div>
+
 <div class="row g-4">
     {% for task in tasks %}
-    <div class="col-md-4">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between mb-2">
-                    
-                    <!-- 2. Look up the color using the tag name. Default to 'bg-primary' for any newly approved tags -->
-                    <span class="badge {{ tag_colors.get(task.tag.name, 'bg-primary') }}">{{ task.tag.name }}</span>
-                    
-                    <span class="badge bg-secondary">{{ task.current_attendees }} / {{ task.max_attendees }} Joined</span>
+    <div class="col-lg-4 col-md-6">
+        <div class="card broski-card h-100 d-flex flex-column">
+            <div class="card-body d-flex flex-column">
+                
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <span class="badge {{ tag_colors.get(task.tag.name, 'bg-primary') }} shadow-sm">
+                        {{ task.tag.name }}
+                    </span>
+                    <span class="badge bg-light text-secondary border">
+                        <i class="bi bi-people-fill me-1"></i> {{ task.current_attendees }} / {{ task.max_attendees }}
+                    </span>
                 </div>
                 
-                <h5 class="card-title">{{ task.title }}</h5>
-                <p class="text-muted small mb-1">📍 {{ task.location }}</p>
+                <h4 class="card-title fw-bold text-dark mb-3">{{ task.title }}</h4>
                 
-                {% if task.description %}
-                    <p class="text-muted small">{{ task.description }}</p>
-                {% endif %}
+                <div class="text-secondary small mb-3 flex-grow-1">
+                    <div class="mb-2">
+                        <i class="bi bi-geo-alt text-primary me-2"></i> 
+                        <span class="fw-medium">{{ task.location }}</span>
+                    </div>
+                    {% if task.description %}
+                    <div class="mb-2">
+                        <i class="bi bi-text-left text-muted me-2"></i> 
+                        {{ task.description }}
+                    </div>
+                    {% endif %}
+                    <div>
+                        <i class="bi bi-clock-history text-warning me-2"></i> 
+                        {{ task.startTime.strftime('%a, %b %d • %I:%M %p') }}
+                    </div>
+                </div>
                 
-                <p class="mb-1"><strong>Time:</strong> {{ task.startTime.strftime('%Y-%m-%d %I:%M %p') }}</p>
+                <div class="mt-auto pt-3 border-top">
+                    {% if task.isActive %}
+                        <form method="POST" action="{{ url_for('rsvp', task_id=task.id) }}">
+                            <button type="submit" class="btn btn-success w-100 shadow-sm">
+                                <i class="bi bi-check-circle me-1"></i> Count me in!
+                            </button>
+                        </form>
+                    {% else %}
+                        <button class="btn btn-light w-100 text-muted" disabled>
+                            <i class="bi bi-lock-fill me-1"></i> Too late / Full
+                        </button>
+                    {% endif %}
+                </div>
                 
-                {% if task.isActive %}
-                    <form method="POST" action="{{ url_for('rsvp', task_id=task.id) }}" class="mt-3">
-                        <button type="submit" class="btn btn-success w-100">Join Meetup</button>
-                    </form>
-                {% else %}
-                    <button class="btn btn-secondary w-100 mt-3" disabled>Closed</button>
-                {% endif %}
             </div>
         </div>
     </div>
+    {% else %}
+    
+    <div class="col-12 text-center py-5">
+        <div class="bg-white p-5 rounded-4 shadow-sm border">
+            <i class="bi bi-calendar2-x text-muted" style="font-size: 3rem;"></i>
+            <h4 class="fw-bold mt-3">No active meetups</h4>
+            <p class="text-muted">It's quiet on campus right now. Be the first to start something!</p>
+            <a href="{{ url_for('add_task') }}" class="btn btn-primary mt-2">Host a Meetup</a>
+        </div>
+    </div>
+    
     {% endfor %}
 </div>
 {% endblock %}

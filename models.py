@@ -2,6 +2,8 @@ from extensions import db
 from flask_login import UserMixin
 from datetime import datetime, timedelta
 
+
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     uid = db.Column(db.String(25), unique=True)
@@ -32,6 +34,8 @@ class Task(db.Model):
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     shared_with = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
 
+
+# to close event if timeout or max attendees
     @property
     def isActive(self):
         if self.current_attendees >= self.max_attendees:
